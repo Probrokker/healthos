@@ -363,6 +363,16 @@ def update_profile(profile_id: int, data: ProfileUpdate, db: Session = Depends(g
         age_years=age["years"], age_months=age["months"],
     )
 
+
+@app.delete("/profiles/{profile_id}")
+def delete_profile(profile_id: int, db: Session = Depends(get_db)):
+    p = db.query(Profile).filter(Profile.id == profile_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Профиль не найден")
+    db.delete(p)
+    db.commit()
+    return {"ok": True, "deleted": p.name}
+
 if __name__ == "__main__":
     import uvicorn
     create_tables()
