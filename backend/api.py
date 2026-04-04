@@ -332,6 +332,37 @@ def create_profile(data: ProfileCreate, db: Session = Depends(get_db)):
         age_years=age["years"], age_months=age["months"],
     )
 
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    blood_type: Optional[str] = None
+    allergies: Optional[list] = None
+    chronic_conditions: Optional[list] = None
+    family_history: Optional[dict] = None
+    notes: Optional[str] = None
+
+
+@app.patch("/profiles/{profile_id}", response_model=ProfileOut)
+def update_profile(profile_id: int, data: ProfileUpdate, db: Session = Depends(get_db)):
+    p = db.query(Profile).filter(Profile.id == profile_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Профиль не найден")
+    if data.name is not None: p.name = data.name
+    if data.blood_type is not None: p.blood_type = data.blood_type
+    if data.allergies is not None: p.allergies = data.allergies
+    if data.chronic_conditions is not None: p.chronic_conditions = data.chronic_conditions
+    if data.family_history is not None: p.family_history = data.family_history
+    if data.notes is not None: p.notes = data.notes
+    db.commit()
+    db.refresh(p)
+    age = calculate_age(p.birthdate)
+    return ProfileOut(
+        id=p.id, name=p.name, birthdate=p.birthdate,
+        gender=p.gender, blood_type=p.blood_type, is_child=p.is_child,
+        allergies=p.allergies or [], chronic_conditions=p.chronic_conditions or [],
+        age_years=age["years"], age_months=age["months"],
+    )
+
 if __name__ == "__main__":
     import uvicorn
     create_tables()
