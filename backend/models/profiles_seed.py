@@ -18,6 +18,17 @@ FAMILY_PROFILES = [
         "notes": "Взрослый профиль. CEO/основатель. Бизнес-нагрузка, командировки, адаптогены.",
     },
     {
+        "name": "Мама",
+        "birthdate": date(1987, 1, 21),
+        "gender": "female",
+        "blood_type": None,
+        "is_child": False,
+        "allergies": [],
+        "chronic_conditions": [],
+        "family_history": {},
+        "notes": "Взрослый профиль. 39 лет.",
+    },
+    {
         "name": "София",
         "birthdate": date(2015, 11, 28),
         "gender": "female",
@@ -68,18 +79,22 @@ def seed_profiles():
     create_tables()
     db = SessionLocal()
     try:
-        existing = db.query(Profile).count()
-        if existing == 0:
-            for p in FAMILY_PROFILES:
+        existing_names = {p.name for p in db.query(Profile).all()}
+        added = 0
+        for p in FAMILY_PROFILES:
+            if p["name"] not in existing_names:
                 profile = Profile(**p)
                 db.add(profile)
-            db.commit()
-            print(f"Созданы {len(FAMILY_PROFILES)} профилей семьи")
+                added += 1
+        db.commit()
+        if added:
+            print(f"Добавлено {added} новых профилей")
         else:
-            print(f"Профили уже существуют ({existing} штук)")
+            print(f"Все профили уже существуют ({len(existing_names)} штук)")
     finally:
         db.close()
 
 
 if __name__ == "__main__":
     seed_profiles()
+
