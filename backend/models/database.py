@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date, DateTime, Text, ForeignKey, JSON, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Float, Date, DateTime, Text, ForeignKey, JSON, Boolean, Time
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
@@ -40,6 +40,7 @@ class Profile(Base):
     medications = relationship("Medication", back_populates="profile", cascade="all, delete-orphan")
     growth_records = relationship("GrowthRecord", back_populates="profile", cascade="all, delete-orphan")
     vaccines = relationship("Vaccine", back_populates="profile", cascade="all, delete-orphan")
+    med_reminders = relationship("MedicationReminder", back_populates="profile", cascade="all, delete-orphan")
 
 
 class LabResult(Base):
@@ -50,7 +51,7 @@ class LabResult(Base):
     date = Column(Date, nullable=False)
     lab_name = Column(String(200))
     test_type = Column(String(100))
-    markers = Column(JSON, default=list)  # [{name, value, unit, ref_min, ref_max, status}]
+    markers = Column(JSON, default=list)
     raw_text = Column(Text)
     file_path = Column(String(500))
     notes = Column(Text)
@@ -97,6 +98,24 @@ class Medication(Base):
     profile = relationship("Profile", back_populates="medications")
 
 
+class MedicationReminder(Base):
+    """Напоминания о приёме лекарств в конкретное время."""
+    __tablename__ = "medication_reminders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    medication_name = Column(String(200), nullable=False)
+    dosage = Column(String(100))
+    times = Column(JSON, default=list)   # ["08:00", "14:00", "20:00"]
+    start_date = Column(Date)
+    end_date = Column(Date)
+    is_active = Column(Boolean, default=True)
+    chat_id = Column(String(50))         # Telegram chat_id куда слать
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    profile = relationship("Profile", back_populates="med_reminders")
+
+
 class GrowthRecord(Base):
     __tablename__ = "growth_records"
 
@@ -139,10 +158,28 @@ class Hypothesis(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     title = Column(String(300), nullable=False)
     description = Column(Text)
-    status = Column(String(50), default="moderate")  # strong, moderate, weak, refuted, confirmed
+    status = Column(String(50), default="moderate")
     evidence_for = Column(JSON, default=list)
     evidence_against = Column(JSON, default=list)
     next_steps = Column(JSON, default=list)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class MedicineChest(Base):
+    """Семейная аптечка."""
+    __tablename__ = "medicine_chest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    form = Column(String(100))           # таблетки, сироп, капли и т.д.
+    dosage = Column(String(100))
+    quantity = Column(String(100))       # "1 упаковка", "30 таблеток"
+    expiry_date = Column(Date)
+    location = Column(String(200))       # где лежит
+    for_whom = Column(JSON, default=list)  # ["дети", "взрослые"] или имена
+    notes = Column(Text)
+    is_available = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

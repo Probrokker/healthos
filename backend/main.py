@@ -30,7 +30,7 @@ def run_api():
 
 
 def run_bot():
-    from bot_v3 import main as bot_main
+    from bot_v4 import main as bot_main
     bot_main()
 
 
