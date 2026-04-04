@@ -1,5 +1,21 @@
-import Link from 'next/link'
-import { getProfileLabs, formatDate, statusLabel, statusBadgeClass } from '@/lib/api'
+import Link from "next/link"
+import { getProfileLabs, formatDate, statusLabel, statusBadgeClass } from "@/lib/api"
+
+interface Marker {
+  name: string
+  value: string
+  unit?: string
+  status?: string
+  ref_min?: string
+  ref_max?: string
+}
+
+function markerStatusColor(status?: string): string {
+  if (!status || status === "normal") return "text-green-400"
+  if (["low","high"].includes(status)) return "text-yellow-400"
+  if (status.includes("critical")) return "text-red-400"
+  return "text-text-secondary"
+}
 
 export default async function LabsPage({ params }: { params: { id: string } }) {
   const { id } = params
@@ -12,143 +28,143 @@ export default async function LabsPage({ params }: { params: { id: string } }) {
     error = true
   }
 
-  // Group by date
-  const grouped: Record<string, typeof labs> = {}
-  for (const lab of labs) {
-    const date = lab.date.split('T')[0]
-    if (!grouped[date]) grouped[date] = []
-    grouped[date].push(lab)
-  }
-  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+  // Считаем аномальные маркеры
+  const abnormalCount = labs.reduce((sum, lab) => {
+    const markers: Marker[] = lab.markers || []
+    return sum + markers.filter((m) => m.status && m.status !== "normal").length
+  }, 0)
 
-  const abnormalCount = labs.filter((l) => l.status !== 'normal').length
+  // Сортируем по дате убыванию
+  const sorted = [...labs].sort((a, b) => b.date.localeCompare(a.date))
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-text-primary font-semibold text-xl">Анализы</h2>
-          <p className="text-text-secondary text-sm mt-0.5">
+          <h2 className="font-semibold text-xl" style={{ color: "var(--text-primary)" }}>Анализы</h2>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
             {labs.length} записей
             {abnormalCount > 0 && (
               <span className="ml-2 badge-critical text-xs px-2 py-0.5 rounded-full">
-                {abnormalCount} отклонений
+                {abnormalCount} откл.
               </span>
             )}
           </p>
         </div>
         <Link
           href={`/profile/${id}/trend`}
-          className="px-4 py-2 rounded-lg bg-accent/10 border border-accent/30 text-accent text-sm font-medium hover:bg-accent/20 transition-colors"
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{ backgroundColor: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)", color: "var(--accent)" }}
         >
           Динамика маркера →
         </Link>
       </div>
 
       {error && (
-        <div className="text-center py-12 text-text-secondary">
-          Не удалось загрузить анализы. Проверьте подключение к API.
+        <div className="text-center py-12" style={{ color: "var(--text-secondary)" }}>
+          Не удалось загрузить анализы.
         </div>
       )}
 
       {!error && labs.length === 0 && (
-        <div className="text-center py-12 text-text-secondary">
-          Анализы не найдены
+        <div className="text-center py-12" style={{ color: "var(--text-secondary)" }}>
+          Анализов пока нет. Отправьте фото бланка боту — он всё распознает.
         </div>
       )}
 
-      {sortedDates.map((date) => (
-        <div key={date} className="mb-8">
-          {/* Date header */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-px flex-1 bg-bg-border" />
-            <span className="text-text-muted text-xs font-medium px-2">{formatDate(date)}</span>
-            <div className="h-px flex-1 bg-bg-border" />
-          </div>
+      <div className="space-y-6">
+        {sorted.map((lab) => {
+          const markers: Marker[] = lab.markers || []
+          const abnormal = markers.filter((m) => m.status && m.status !== "normal")
 
-          {/* Lab results table */}
-          <div className="bg-bg-elevated/30 border border-bg-border rounded-xl overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-bg-border">
-                  <th className="text-left text-text-muted text-xs uppercase tracking-wider px-4 py-3 font-medium">Маркер</th>
-                  <th className="text-right text-text-muted text-xs uppercase tracking-wider px-4 py-3 font-medium">Значение</th>
-                  <th className="text-right text-text-muted text-xs uppercase tracking-wider px-4 py-3 font-medium">Референс</th>
-                  <th className="text-center text-text-muted text-xs uppercase tracking-wider px-4 py-3 font-medium">Статус</th>
-                  <th className="text-right text-text-muted text-xs uppercase tracking-wider px-4 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-bg-border">
-                {grouped[date].map((lab, idx) => {
-                  const isAbnormal = lab.status !== 'normal'
-                  return (
-                    <tr
-                      key={lab.id || idx}
-                      className={`transition-colors ${
-                        isAbnormal ? 'bg-red-500/3 hover:bg-red-500/6' : 'hover:bg-bg-elevated/50'
-                      }`}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {isAbnormal && (
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                              lab.status.includes('critical') ? 'bg-red-400' : 'bg-yellow-400'
-                            }`} />
-                          )}
-                          <span className={`font-medium text-sm ${isAbnormal ? 'text-text-primary' : 'text-text-secondary'}`}>
-                            {lab.marker}
-                          </span>
-                          {lab.lab_type && (
-                            <span className="text-text-muted text-xs">{lab.lab_type}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className={`font-semibold text-sm font-mono ${labStatusColor(lab.status)}`}>
-                          {lab.value} {lab.unit}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="text-text-muted text-xs font-mono">
-                          {lab.ref_min !== undefined && lab.ref_max !== undefined
-                            ? `${lab.ref_min} – ${lab.ref_max}`
-                            : '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${statusBadgeClass(lab.status)}`}>
-                          {statusLabel(lab.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/profile/${id}/trend?marker=${encodeURIComponent(lab.marker)}`}
-                          className="text-text-muted hover:text-accent text-xs transition-colors"
-                          title="Смотреть динамику"
-                        >
-                          Динамика →
-                        </Link>
-                      </td>
+          return (
+            <div key={lab.id} className="rounded-xl overflow-hidden"
+                 style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--bg-border)" }}>
+              {/* Заголовок анализа */}
+              <div className="px-5 py-4 flex items-center justify-between"
+                   style={{ borderBottom: "1px solid var(--bg-border)" }}>
+                <div>
+                  <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                    {lab.test_type || "Анализ"}
+                  </span>
+                  {lab.lab_name && (
+                    <span className="ml-2 text-sm" style={{ color: "var(--text-muted)" }}>
+                      {lab.lab_name}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {abnormal.length > 0 && (
+                    <span className="badge-critical text-xs px-2 py-0.5 rounded-full">
+                      {abnormal.length} откл.
+                    </span>
+                  )}
+                  <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+                    {formatDate(lab.date)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Маркеры */}
+              {markers.length > 0 ? (
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--bg-border)" }}>
+                      <th className="text-left text-xs uppercase tracking-wider px-5 py-2.5 font-medium" style={{ color: "var(--text-muted)" }}>Показатель</th>
+                      <th className="text-right text-xs uppercase tracking-wider px-5 py-2.5 font-medium" style={{ color: "var(--text-muted)" }}>Значение</th>
+                      <th className="text-right text-xs uppercase tracking-wider px-5 py-2.5 font-medium" style={{ color: "var(--text-muted)" }}>Норма</th>
+                      <th className="text-center text-xs uppercase tracking-wider px-5 py-2.5 font-medium" style={{ color: "var(--text-muted)" }}>Статус</th>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+                  </thead>
+                  <tbody>
+                    {markers.map((m, idx) => {
+                      const isAbnormal = m.status && m.status !== "normal"
+                      return (
+                        <tr key={idx}
+                            style={{ borderTop: idx > 0 ? "1px solid var(--bg-border)" : "none",
+                                     backgroundColor: isAbnormal ? "rgba(239,68,68,0.03)" : "transparent" }}>
+                          <td className="px-5 py-3">
+                            <div className="flex items-center gap-2">
+                              {isAbnormal && (
+                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                  m.status?.includes("critical") ? "bg-red-400" : "bg-yellow-400"
+                                }`} />
+                              )}
+                              <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                                {m.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <span className={`font-semibold text-sm font-mono ${markerStatusColor(m.status)}`}>
+                              {m.value} {m.unit || ""}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+                              {m.ref_min && m.ref_max ? `${m.ref_min} – ${m.ref_max}` : "—"}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-center">
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${statusBadgeClass(m.status || "normal")}`}>
+                              {statusLabel(m.status || "normal")}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="px-5 py-4 text-sm" style={{ color: "var(--text-muted)" }}>
+                  Маркеры не извлечены
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function labStatusColor(status: string): string {
-  switch (status) {
-    case 'normal': return 'text-green-400'
-    case 'low': return 'text-yellow-400'
-    case 'high': return 'text-yellow-400'
-    case 'critical': return 'text-red-400'
-    case 'critical_low': return 'text-red-400'
-    default: return 'text-text-secondary'
-  }
-}
