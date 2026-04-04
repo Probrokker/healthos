@@ -1,22 +1,39 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import Nav from '@/components/Nav'
-import ThemeProvider from '@/components/ThemeProvider'
+import type { Metadata } from "next"
+import "./globals.css"
+import Nav from "@/components/Nav"
+import ThemeProvider from "@/components/ThemeProvider"
+import { MOCK_PROFILES } from "@/lib/mock"
 
 export const metadata: Metadata = {
-  title: 'Health-OS — Семейный медицинский дашборд',
-  description: 'Отслеживание здоровья семьи: анализы, визиты, рост, лекарства',
-  icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M16 2L28 9V23L16 30L4 23V9L16 2Z' stroke='%236366f1' stroke-width='1.5' fill='none'/><rect x='14' y='8' width='4' height='16' rx='1.5' fill='%236366f1'/><rect x='8' y='14' width='16' height='4' rx='1.5' fill='%236366f1'/></svg>",
-  },
+  title: "Health-OS — Семейный медицинский дашборд",
+  description: "Отслеживание здоровья семьи: анализы, визиты, рост, лекарства",
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+async function getNavProfiles() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/profiles`,
+      { cache: "no-store" }
+    )
+    if (!res.ok) throw new Error("API error")
+    const data = await res.json()
+    return data.map((p: { id: number; name: string; birthdate: string }) => ({
+      id: String(p.id),
+      name: p.name,
+    }))
+  } catch {
+    return MOCK_PROFILES.map((p) => ({ id: p.id, name: p.name }))
+  }
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const profiles = await getNavProfiles()
+
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className="min-h-screen" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
         <ThemeProvider>
-          <Nav />
+          <Nav profiles={profiles} />
           <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
             {children}
           </main>
