@@ -295,6 +295,43 @@ def get_family_overview(db: Session = Depends(get_db)):
     return {"family": result, "total_members": len(result)}
 
 
+
+class ProfileCreate(BaseModel):
+    name: str
+    birthdate: date
+    gender: Optional[str] = None
+    blood_type: Optional[str] = None
+    is_child: bool = True
+    allergies: Optional[list] = None
+    chronic_conditions: Optional[list] = None
+    family_history: Optional[dict] = None
+    notes: Optional[str] = None
+
+
+@app.post("/profiles", response_model=ProfileOut)
+def create_profile(data: ProfileCreate, db: Session = Depends(get_db)):
+    age = calculate_age(data.birthdate)
+    p = Profile(
+        name=data.name,
+        birthdate=data.birthdate,
+        gender=data.gender,
+        blood_type=data.blood_type,
+        is_child=data.is_child,
+        allergies=data.allergies or [],
+        chronic_conditions=data.chronic_conditions or [],
+        family_history=data.family_history or {},
+        notes=data.notes,
+    )
+    db.add(p)
+    db.commit()
+    db.refresh(p)
+    return ProfileOut(
+        id=p.id, name=p.name, birthdate=p.birthdate,
+        gender=p.gender, blood_type=p.blood_type, is_child=p.is_child,
+        allergies=p.allergies or [], chronic_conditions=p.chronic_conditions or [],
+        age_years=age["years"], age_months=age["months"],
+    )
+
 if __name__ == "__main__":
     import uvicorn
     create_tables()
