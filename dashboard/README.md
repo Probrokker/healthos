@@ -73,3 +73,5 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 | Аня | 04.03.2019 |
 | Лука | 06.04.2023 |
 | Федор | 12.09.2025 |
+<!-- redeploy trigger: Sat Apr  4 23:20:21 UTC 2026 -->
+
