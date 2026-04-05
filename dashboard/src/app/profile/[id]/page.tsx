@@ -91,7 +91,7 @@ export default async function ProfileOverviewPage({ params }: { params: { id: st
                 <div key={visit.id} className="bg-bg-elevated/40 rounded-lg p-3 border border-bg-border">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-text-primary text-sm font-medium">{visit.doctor}</p>
+                      <p className="text-text-primary text-sm font-medium">{visit.doctor_name}</p>
                       {visit.specialty && (
                         <p className="text-text-muted text-xs">{visit.specialty}</p>
                       )}
