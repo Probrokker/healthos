@@ -1,6 +1,6 @@
 """
-Начальные профили семьи Кирилла.
-Запускается один раз при инициализации БД.
+Начальные профили семьи.
+Запускается при каждом старте — добавляет только отсутствующих.
 """
 from datetime import date
 from database import SessionLocal, Profile, create_tables
@@ -15,10 +15,10 @@ FAMILY_PROFILES = [
         "allergies": [],
         "chronic_conditions": [],
         "family_history": {},
-        "notes": "Взрослый профиль. CEO/основатель. Бизнес-нагрузка, командировки, адаптогены.",
+        "notes": "Взрослый профиль. CEO/основатель.",
     },
     {
-        "name": "Мама",
+        "name": "Маша",
         "birthdate": date(1987, 1, 21),
         "gender": "female",
         "blood_type": None,
@@ -26,7 +26,7 @@ FAMILY_PROFILES = [
         "allergies": [],
         "chronic_conditions": [],
         "family_history": {},
-        "notes": "Взрослый профиль. 39 лет.",
+        "notes": "Мама.",
     },
     {
         "name": "София",
@@ -80,17 +80,24 @@ def seed_profiles():
     db = SessionLocal()
     try:
         existing_names = {p.name for p in db.query(Profile).all()}
+        # Удаляем устаревший профиль "Мама" если есть
+        old = db.query(Profile).filter(Profile.name == "Мама").all()
+        for o in old:
+            db.delete(o)
+        if old:
+            db.commit()
+            print(f"Удалён устаревший профиль Мама")
+        # Добавляем только отсутствующих
         added = 0
         for p in FAMILY_PROFILES:
             if p["name"] not in existing_names:
-                profile = Profile(**p)
-                db.add(profile)
+                db.add(Profile(**p))
                 added += 1
-        db.commit()
         if added:
+            db.commit()
             print(f"Добавлено {added} новых профилей")
         else:
-            print(f"Все профили уже существуют ({len(existing_names)} штук)")
+            print(f"Все профили актуальны ({len(existing_names)} в БД)")
     finally:
         db.close()
 
