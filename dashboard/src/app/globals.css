@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,14 +17,14 @@
 
 /* === СВЕТЛАЯ ТЕМА === */
 [data-theme="light"] {
-  --bg-primary: #f4f5f9;
+  --bg-primary: #f0f2f8;
   --bg-card: #ffffff;
-  --bg-elevated: #eef0f8;
-  --bg-border: #dde0ef;
-  --accent: #6366f1;
-  --accent-hover: #4f52d4;
-  --text-primary: #1a1d2e;
-  --text-secondary: #5a5e78;
+  --bg-elevated: #e8eaf4;
+  --bg-border: #d4d7e8;
+  --accent: #5254cc;
+  --accent-hover: #4345b0;
+  --text-primary: #111827;
+  --text-secondary: #4b5280;
   --text-muted: #9196b0;
 }
 
@@ -35,54 +33,44 @@
 html, body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Tailwind utility overrides — используем CSS переменные */
+.bg-bg-primary { background-color: var(--bg-primary) !important; }
+.bg-bg-card    { background-color: var(--bg-card) !important; }
+.bg-bg-elevated { background-color: var(--bg-elevated) !important; }
+.border-bg-border { border-color: var(--bg-border) !important; }
+.text-text-primary { color: var(--text-primary) !important; }
+.text-text-secondary { color: var(--text-secondary) !important; }
+.text-text-muted { color: var(--text-muted) !important; }
+.text-accent { color: var(--accent) !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Recharts overrides */
-.recharts-cartesian-grid-horizontal line,
-.recharts-cartesian-grid-vertical line {
-  stroke: var(--bg-border);
-}
-.recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--bg-border) !important;
-  border-radius: 8px !important;
-  color: var(--text-primary) !important;
-}
-.recharts-legend-item-text { color: var(--text-secondary) !important; }
-
-/* Tab underline animation */
-.tab-active { position: relative; }
-.tab-active::after {
-  content: "";
-  position: absolute;
-  bottom: -1px; left: 0; right: 0;
-  height: 2px;
-  background: var(--accent);
-  border-radius: 1px;
-}
-
-/* Card hover glow */
+/* Card hover */
 .card-hover { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 .card-hover:hover {
-  box-shadow: 0 0 0 1px rgba(99,102,241,0.3), 0 4px 24px rgba(99,102,241,0.08);
-  border-color: rgba(99,102,241,0.4) !important;
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.3), 0 4px 20px rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.35) !important;
 }
 
 /* Status badges */
-.badge-normal  { background: rgba(34,197,94,0.12);  color:#22c55e; border:1px solid rgba(34,197,94,0.25); }
-.badge-warning { background: rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.25); }
-.badge-critical{ background: rgba(239,68,68,0.12);  color:#ef4444; border:1px solid rgba(239,68,68,0.25); }
+.badge-normal  { background: rgba(34,197,94,0.12);  color:#22c55e; border:1px solid rgba(34,197,94,0.25); border-radius: 9999px; padding: 1px 8px; font-size: 11px; }
+.badge-warning { background: rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.25); border-radius: 9999px; padding: 1px 8px; font-size: 11px; }
+.badge-critical{ background: rgba(239,68,68,0.12);  color:#ef4444; border:1px solid rgba(239,68,68,0.25); border-radius: 9999px; padding: 1px 8px; font-size: 11px; }
 
-@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.6} }
-.animate-pulse-red { animation: pulse-red 2s ease-in-out infinite; }
+/* Recharts в светлой теме */
+[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+[data-theme="light"] .recharts-cartesian-grid-vertical line {
+  stroke: var(--bg-border);
+}
+[data-theme="light"] .recharts-text { fill: var(--text-secondary) !important; }
 
