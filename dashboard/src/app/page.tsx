@@ -18,6 +18,7 @@ interface MemberCardData {
   birth_date: string
   is_child: boolean
   age: number
+  age_years?: number
   labs_count: number
   visits_count: number
   active_medications: number
@@ -132,23 +133,22 @@ export default async function FamilyOverviewPage() {
   let profiles: { id: string; name: string; birth_date: string; is_child?: boolean }[] = []
 
   try {
-    try {
-      const overview = await getFamilyOverview()
-      if (overview.members) {
-        profiles = overview.members.map((m: { id: string; name: string; birth_date: string; is_child?: boolean }) => ({
-          id: m.id,
-          name: m.name,
-          birth_date: m.birth_date,
-          is_child: m.is_child,
-        }))
-      }
-    } catch {
-      const raw = await getProfiles()
-      profiles = raw.map((p: { id: string; name: string; birthdate?: string; birth_date?: string; is_child?: boolean }) => ({
-        id: p.id,
-        name: p.name,
-        birth_date: p.birthdate || p.birth_date || "",
-        is_child: p.is_child,
+    // Берём данные из /family/overview — там уже есть age_years
+    const raw = await fetch(
+      (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/family/overview",
+      { cache: "no-store" }
+    )
+    if (raw.ok) {
+      const data = await raw.json()
+      profiles = (data.family || []).map((m: { id: number; name: string; is_child: boolean; age_years: number; age_months: number; labs_count: number; active_medications: number; last_visit_date?: string; last_visit_specialty?: string }) => ({
+        id: String(m.id),
+        name: m.name,
+        birth_date: "",
+        is_child: m.is_child,
+        age_years: m.age_years,
+        labs_count: m.labs_count,
+        active_medications: m.active_medications,
+        last_visit_date: m.last_visit_date,
       }))
     }
   } catch {
