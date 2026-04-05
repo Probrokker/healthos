@@ -38,7 +38,7 @@ async function getMemberData(profile: { id: string; name: string; birth_date: st
       active_medications: stats.active_medications,
       last_lab_date: stats.last_lab_date,
       last_lab_type: stats.last_lab_type,
-      recent_abnormal_markers: stats.recent_abnormal_markers || [],
+      recent_abnormal_markers: Array.isArray(stats.recent_abnormal_markers) ? stats.recent_abnormal_markers : [],
     }
   } catch {
     return {
@@ -69,7 +69,7 @@ function MemberCard({ member }: { member: MemberCardData }) {
             )}
           </div>
           <p className="text-text-secondary text-sm">
-            {member.age === 0 ? "До 1 года" : `${member.age} ${ageLabel(member.age)}`}
+            {member.age < 1 ? "До 1 года" : member.age === 1 ? "1 год" : `${member.age} ${ageLabel(member.age)}`}
           </p>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default async function FamilyOverviewPage() {
   const parents = members.filter((m) => !m.is_child)
   const children = members.filter((m) => m.is_child)
 
-  const totalAbnormal = members.reduce((s, m) => s + m.recent_abnormal_markers.length, 0)
+  const totalAbnormal = members.reduce((s, m) => s + (Array.isArray(m.recent_abnormal_markers) ? m.recent_abnormal_markers.length : 0), 0)
   const totalMeds = members.reduce((s, m) => s + m.active_medications, 0)
   const totalLabs = members.reduce((s, m) => s + m.labs_count, 0)
 
@@ -179,8 +179,8 @@ export default async function FamilyOverviewPage() {
       </div>
 
       {/* Summary strip */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
-        <div className="bg-bg-card border border-bg-border rounded-xl p-4 flex items-center gap-4">
+      <div className="grid grid-cols-3 gap-2 mb-8 overflow-hidden">
+        <div className="bg-bg-card border border-bg-border rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -191,7 +191,7 @@ export default async function FamilyOverviewPage() {
             <p className="text-2xl font-bold text-text-primary">{totalLabs}</p>
           </div>
         </div>
-        <div className="bg-bg-card border border-bg-border rounded-xl p-4 flex items-center gap-4">
+        <div className="bg-bg-card border border-bg-border rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -243,4 +243,3 @@ function ageLabel(age: number): string {
   if ([2,3,4,22,23,24,32,33,34].includes(age)) return "года"
   return "лет"
 }
-
