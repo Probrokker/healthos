@@ -116,7 +116,7 @@ export default async function FamilyOverviewPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>Семейный обзор</h1>
+        <h1 className="text-3xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>Обзор семьи</h1>
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Мониторинг здоровья всех членов семьи</p>
       </div>
 
@@ -165,4 +165,3 @@ export default async function FamilyOverviewPage() {
     </div>
   )
 }
-
